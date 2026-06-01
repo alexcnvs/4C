@@ -1,0 +1,191 @@
+# Gestor de contactos
+
+El Gestor de Contactos (GCont) es una herramienta de moderación y control del dato que centraliza la entrada, revisión y validación de contactos antes de su incorporación definitiva en el CRM.
+
+Su objetivo es garantizar la calidad, coherencia y trazabilidad de la información de contactos, evitando la entrada directa en CRM de datos incorrectos, incompletos o duplicados.
+
+Actúa como una capa intermedia que permite:
+- Revisar contactos nuevos o modificados
+- Evitar errores y duplicados en Sales
+- Decidir qué cambios se aceptan y cuáles se rechazan
+- Mantener trazabilidad completa de los cambios
+
+El Gestor actúa siempre que un contacto entra o se modifica desde alguno de los siguientes orígenes:
+- Formularios web (Newsletter, Eventos, Alumni)
+- Formularios personalizados (Modificación datos)
+- Gestor Eventos (alta manual / carga masiva)
+- Carga masiva de contactos
+
+En función del tipo de cambio, el contacto:
+- Se para para moderación, o
+- Pasa directo a CRM, dejando solo trazabilidad en el log
+
+---
+
+## 1. Entidad principal: Contacto en el Gestor
+
+Un contacto en el Gestor representa una entrada a moderar, no necesariamente un contacto único.
+
+Puede haber varios registros para un mismo contacto, cada uno con su propio origen y estado.
+
+### 1.1 Datos principales del contacto
+
+Se gestionan, entre otros, los siguientes campos:
+
+- **Datos personales**: Nombre, Apellidos, Email, Tratamiento
+- **Relación**: Account, Cargo, Email relación
+- **Dirección**: País, Provincia, Población, Dirección, CP, Teléfono
+- **Marketing**: LOPD, Intereses, Idioma
+- **Gestión**:
+  - Origen
+  - Estado
+  - Fecha de modificación
+  - Tipo de modificación / error
+
+**No se crean Accounts desde el Gestor.**
+
+---
+
+## 2. Estados del contacto
+
+Cada contacto que entra en el Gestor se encuentra en uno de los siguientes estados funcionales, que determinan si requiere intervención del usuario y qué acciones están disponibles:
+
+| Estado                        | Descripción funcional |
+|------------------------------|----------------------|
+| Pendiente                    | Contacto nuevo que entra desde un formulario o proceso y requiere revisión manual. |
+| Cambio pendiente de revisar  | Modificación de un contacto existente en la que se han cambiado campos clave de identidad o relación |
+| Pendiente duplicado          | Contacto con error o posible duplicado detectado durante una carga masiva. |
+| Enviado a CRM                | Contacto o modificación aceptada y aplicada en el CRM. |
+| Enviado a Dark Side          | Contacto gestionado fuera del CRM (repositorio Dark Side). |
+| Rechazado                    | Contacto o modificación descartada por el usuario. Se mantiene para posible revisión futura. |
+
+---
+
+## 3. Pantalla principal
+
+Muestra por defecto solo los contactos pendientes de moderar.
+
+### 3.1 Columnas principales
+
+- Nombre y Apellidos
+- Email
+- Cargo
+- Account
+- Origen
+- Tipo de modificación
+- Tipo de error
+- Fecha de modificación
+- LOPD
+- Estado
+
+### 3.2 Acciones desde el listado
+
+- **Editar** (acceder al detalle)
+- **Rechazar** directamente
+- Refrescar listado
+
+---
+
+## 4. Moderación de contactos
+
+A continuación se describen los principales tipos de moderación de contactos que gestiona el Gestor, en función del origen del registro y del tipo de incidencia detectada.
+
+---
+
+### 4.1 Nuevo contacto
+
+Corresponde a contactos que entran desde:
+- Formularios web (newsletter, eventos)
+- Altas manuales en eventos
+
+Estos contactos aparecen con estado **Pendiente**.
+
+Durante la moderación, el usuario revisa la información recibida y determina si el contacto ya existe en el CRM.
+
+En función del resultado, el contacto puede:
+- aceptarse y enviarse al CRM,
+- gestionarse fuera del CRM (Dark Side), o
+- rechazarse.
+
+Si existe en CRM:
+- Actualizar relación
+- Sustituir relación
+- Añadir relación
+
+Si se crea un nuevo contacto, se debe indicar el origen ‘Newsletter’ o ‘Evento’ en funcion del tipo de formulario.
+
+---
+
+### 4.2 Modificación de un contacto existente
+
+Corresponde principalmente a modificaciones realizadas desde el enlace de modificación / My Profile.
+
+Solo quedan pendientes de moderación las modificaciones que afectan a:
+- Nombre
+- Apellidos
+- Email
+- Account
+
+El contacto entra con estado **Cambio pendiente de revisar**.
+
+El usuario valida los cambios antes de que se apliquen en el CRM.
+
+Ya está vinculado a un ID de contacto y las acciones que se pueden realizar son:
+- Actualizar relación
+- Sustituir relación
+- Añadir relación
+
+---
+
+### 4.3 Errores en carga masiva
+
+Corresponde a contactos procedentes de cargas masivas en las que se detectan:
+- Errores de validación.
+- Posibles duplicados.
+
+Estos contactos aparecen con estado **Pendiente duplicado**.
+
+El usuario revisa cada caso y decide si corrige la información y envía el contacto al CRM o si lo rechaza.
+
+---
+
+### 4.4 Errores en formularios
+
+Incluye contactos enviados desde formularios que presentan:
+- Datos incompletos.
+- Datos inconsistentes.
+- Errores que impiden el alta o modificación automática en el CRM.
+
+Estos contactos se gestionan como **Pendientes** dentro del Gestor y requieren revisión manual antes de su aceptación o rechazo.
+
+---
+
+### 4.5 Formulario Alumni
+
+Corresponde a contactos que entran desde el **formulario Alumni**.
+
+Estos contactos siempre requieren moderación.
+
+El usuario revisa la información y decide su aceptación o rechazo según las reglas de negocio definidas para Alumni.
+
+Se debe vincular el contacto nuevo o existente con la ficha de empleado.
+
+El origen debe cambiarse a **‘Alumni’**.
+
+---
+
+## 5. Carga masiva
+
+Corresponde a contactos que se incorporan al sistema mediante procesos de carga masiva.
+
+Durante la carga masiva pueden producirse distintos escenarios:
+
+- Contactos que se cargan correctamente y no requieren intervención.
+- Contactos con **errores de validación** (datos obligatorios incompletos, formatos incorrectos, inconsistencias).
+- Contactos con **posibles duplicados** respecto a contactos ya existentes en el CRM.
+
+Los contactos que presentan errores o duplicados **quedan pendientes de moderación** y aparecen en el Gestor con estado **Pendiente duplicado**.
+
+En estos casos, el usuario revisa la información cargada, corrige los datos cuando procede y decide si el contacto se envía al CRM o se rechaza.
+
+Este proceso permite asegurar que las cargas masivas no introducen contactos incorrectos o duplicados en el CRM sin validación previa.
